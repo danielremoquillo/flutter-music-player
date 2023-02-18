@@ -1,2 +1,2 @@
-# flutter-music-player
- Simple music player.
+
+Android Simple music player.
