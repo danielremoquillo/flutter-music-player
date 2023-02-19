@@ -81,6 +81,7 @@ class _HomeState extends State<Home> {
 
   requestStoragePermission() async {
     //If the platform is not web, then get permission
+
     if (!kIsWeb) {
       bool permissionsStatus = await _audioQuery.permissionsStatus();
 
@@ -341,7 +342,7 @@ class _HomeState extends State<Home> {
               //if the directory has no mp3 ext files
               if (item.data!.isEmpty) {
                 return const Center(
-                  child: Text('No Songs Found'),
+                  child: CircularProgressIndicator(),
                 );
               }
 
@@ -376,36 +377,6 @@ class _HomeState extends State<Home> {
 
                     //Create Screen to make a Search Page
                     actions: [
-                      IconButton(
-                          onPressed: () async {
-                            setState(() {
-                              isShuffle = !isShuffle;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    isShuffle ? 'Shuffle On' : 'Shuffle Off',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(fontSize: 14.0),
-                                  ),
-                                  behavior: SnackBarBehavior.floating,
-                                  margin: const EdgeInsets.only(
-                                      bottom: 80, left: 30, right: 30),
-                                  duration: const Duration(milliseconds: 600),
-                                  backgroundColor:
-                                      const Color.fromARGB(131, 64, 66, 88),
-                                  elevation: 0,
-                                  shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(20.0))),
-                                ),
-                              );
-                            });
-                            await _player.setShuffleModeEnabled(isShuffle);
-                          },
-                          icon: Icon(
-                            Icons.shuffle_rounded,
-                            color: isShuffle ? Colors.white : Colors.grey,
-                          )),
                       IconButton(
                           onPressed: () => changeOrder(),
                           icon: const Icon(Icons.swap_vert_rounded,
