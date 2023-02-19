@@ -1017,14 +1017,49 @@ class _HomeState extends State<Home> {
                                           color: MusicPlayerTheme().iconColor,
                                         )),
                                     IconButton(
-                                        onPressed: () {
+                                        onPressed: () async {
                                           setState(() {
-                                            isTapped = !isTapped;
+                                            isShuffle = !isShuffle;
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  isShuffle
+                                                      ? 'Shuffle On'
+                                                      : 'Shuffle Off',
+                                                  textAlign: TextAlign.center,
+                                                  style: const TextStyle(
+                                                      fontSize: 14.0),
+                                                ),
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                                margin: const EdgeInsets.only(
+                                                    bottom: 80,
+                                                    left: 30,
+                                                    right: 30),
+                                                duration: const Duration(
+                                                    milliseconds: 600),
+                                                backgroundColor:
+                                                    const Color.fromARGB(
+                                                        131, 64, 66, 88),
+                                                elevation: 0,
+                                                shape:
+                                                    const RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.all(
+                                                                Radius.circular(
+                                                                    20.0))),
+                                              ),
+                                            );
                                           });
+                                          await _player
+                                              .setShuffleModeEnabled(isShuffle);
                                         },
                                         icon: Icon(
-                                          Icons.more_vert,
-                                          color: MusicPlayerTheme().iconColor,
+                                          Icons.shuffle_rounded,
+                                          color: isShuffle
+                                              ? Colors.white
+                                              : Colors.grey,
                                         )),
                                   ],
                                 ),
