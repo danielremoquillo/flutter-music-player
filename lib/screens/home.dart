@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
@@ -7,8 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:music_player/components/music_player_theme.dart';
-import 'package:music_player/screens/song_queue.dart';
-
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:mini_music_visualizer/mini_music_visualizer.dart';
@@ -48,6 +44,8 @@ class _HomeState extends State<Home> {
   bool isQueue = false;
   bool isSearch = false;
 
+  String searchData = '';
+
   //Controller for TextField to control the properties of textfield
   final TextEditingController _textEditingController = TextEditingController();
 
@@ -83,6 +81,7 @@ class _HomeState extends State<Home> {
 
   requestStoragePermission() async {
     //If the platform is not web, then get permission
+
     if (!kIsWeb) {
       bool permissionsStatus = await _audioQuery.permissionsStatus();
 
@@ -99,7 +98,6 @@ class _HomeState extends State<Home> {
   defaultSongs(defaultsong) {
     setState(() {
       search = defaultsong.data!;
-      filteredSongs = search;
     });
   }
 
@@ -344,7 +342,7 @@ class _HomeState extends State<Home> {
               //if the directory has no mp3 ext files
               if (item.data!.isEmpty) {
                 return const Center(
-                  child: Text('No Songs Found'),
+                  child: CircularProgressIndicator(),
                 );
               }
 
@@ -379,36 +377,6 @@ class _HomeState extends State<Home> {
 
                     //Create Screen to make a Search Page
                     actions: [
-                      IconButton(
-                          onPressed: () async {
-                            setState(() {
-                              isShuffle = !isShuffle;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    isShuffle ? 'Shuffle On' : 'Shuffle Off',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(fontSize: 14.0),
-                                  ),
-                                  behavior: SnackBarBehavior.floating,
-                                  margin: const EdgeInsets.only(
-                                      bottom: 80, left: 30, right: 30),
-                                  duration: const Duration(milliseconds: 600),
-                                  backgroundColor:
-                                      const Color.fromARGB(131, 64, 66, 88),
-                                  elevation: 0,
-                                  shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(20.0))),
-                                ),
-                              );
-                            });
-                            await _player.setShuffleModeEnabled(isShuffle);
-                          },
-                          icon: Icon(
-                            Icons.shuffle_rounded,
-                            color: isShuffle ? Colors.white : Colors.grey,
-                          )),
                       IconButton(
                           onPressed: () => changeOrder(),
                           icon: const Icon(Icons.swap_vert_rounded,
@@ -524,6 +492,9 @@ class _HomeState extends State<Home> {
             isSearch = false;
             isQueue = false;
             isHome = true;
+            searchData = '';
+            filteredSongs = [];
+
             SystemChannels.textInput.invokeMethod('TextInput.hide');
             _textEditingController.clear();
           });
@@ -555,6 +526,12 @@ class _HomeState extends State<Home> {
                         .where((item) =>
                             item.title.toLowerCase().contains(_searchText))
                         .toList();
+
+                    if (filteredSongs.isEmpty) {
+                      searchData = 'Nothing found';
+                    } else {
+                      searchData = '';
+                    }
                   });
                 },
 
@@ -578,12 +555,7 @@ class _HomeState extends State<Home> {
                         onPressed: () {
                           _textEditingController.clear();
                           setState(() {
-                            _searchText = '';
-                            filteredSongs = search
-                                .where((item) => item.title
-                                    .toLowerCase()
-                                    .contains(_searchText))
-                                .toList();
+                            filteredSongs = [];
                           });
                         },
                         icon: const Icon(Icons.close))
@@ -681,6 +653,9 @@ class _HomeState extends State<Home> {
                             } else {
                               setState(() {
                                 isTapped = !isTapped;
+                                SystemChannels.textInput
+                                    .invokeMethod('TextInput.hide');
+                                filteredSongs = search;
                               });
                             }
                           },
@@ -688,8 +663,174 @@ class _HomeState extends State<Home> {
                       );
                     }, childCount: filteredSongs.length),
                   )
-                : const SliverToBoxAdapter(
-                    child: Center(child: Text('No Songs Found')))
+                : SliverToBoxAdapter(
+                    child: Container(
+                        height: MediaQuery.of(context).size.height * 0.7,
+                        child: Center(
+                            child: Text(
+                          searchData,
+                          style: TextStyle(
+                              color: MusicPlayerTheme().primaryColor,
+                              fontSize: 16),
+                        ))))
+          ]),
+        ),
+      );
+    } else if (isQueue) {
+      child = WillPopScope(
+        onWillPop: () async {
+          setState(() {
+            isSearch = false;
+            isHome = true;
+            isQueue = false;
+            searchData = '';
+            filteredSongs = [];
+            SystemChannels.textInput.invokeMethod('TextInput.hide');
+            _textEditingController.clear();
+          });
+
+          return false;
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: MusicPlayerTheme().linearGradientBody,
+          ),
+          height: MediaQuery.of(context).size.height,
+          child: CustomScrollView(slivers: [
+            SliverAppBar(
+              pinned: true,
+              title: const Text('Song Queue'),
+              leading: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      isQueue = false;
+                      isHome = true;
+                      isSearch = false;
+                    });
+                  },
+                  icon: const Icon(Icons.arrow_back)),
+              actions: [
+                IconButton(
+                    onPressed: () async {
+                      setState(() {
+                        isShuffle = !isShuffle;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isShuffle ? 'Shuffle On' : 'Shuffle Off',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 14.0),
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            margin: const EdgeInsets.only(
+                                bottom: 80, left: 30, right: 30),
+                            duration: const Duration(milliseconds: 600),
+                            backgroundColor:
+                                const Color.fromARGB(131, 64, 66, 88),
+                            elevation: 0,
+                            shape: const RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20.0))),
+                          ),
+                        );
+                      });
+                      await _player.setShuffleModeEnabled(isShuffle);
+                    },
+                    icon: Icon(
+                      Icons.shuffle_rounded,
+                      color: isShuffle ? Colors.white : Colors.grey,
+                    )),
+              ],
+            ),
+
+            //If the textfield is empty then the icon button will change to search, vice versa to close
+
+            //If the filtered songs is empty, then it will display no songs found
+            SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                //Return the tile of every song
+                return SizedBox(
+                  child: ListTile(
+                    trailing: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (currentSongID == songs[index].id && isPlaying)
+                          MiniMusicVisualizer(
+                            color: MusicPlayerTheme().musicVisualiser,
+                            width: 4,
+                            height: 15,
+                          ),
+                        IconButton(
+                          onPressed: () {},
+                          icon: const Icon(
+                            Icons.more_vert,
+                            color: Colors.white,
+                          ),
+                        )
+                      ],
+                    ),
+
+                    title: SizedBox(
+                      height: 18,
+                      child: Text(
+                        (songs[index].title).replaceAll('_', ' '),
+                        style: TextStyle(
+                            color: currentSongID != songs[index].id
+                                ? MusicPlayerTheme().primaryColor
+                                : MusicPlayerTheme().selectedTile),
+                        maxLines: 1,
+                      ),
+                    ),
+
+                    subtitle: Text(
+                      songs[index].artist ?? "No Artist",
+                      style:
+                          TextStyle(color: MusicPlayerTheme().secondaryColor),
+                      maxLines: 1,
+                    ),
+
+                    //Retrieve the song illustration
+                    leading: QueryArtworkWidget(
+                      id: songs[index].id,
+                      type: ArtworkType.AUDIO,
+                      artworkBorder: BorderRadius.zero,
+                      keepOldArtwork: true,
+
+                      //If the artwork or the song has no illustration
+                      nullArtworkWidget: Container(
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.rectangle,
+                            color: MusicPlayerTheme()
+                                .primaryDefaultArtworkBackgroundColor,
+                          ),
+                          child: const Icon(
+                            Icons.music_note_sharp,
+                            color: Colors.white,
+                          )),
+                    ),
+
+                    onTap: () async {
+                      if (songs[index].id != currentSongID) {
+                        _changePlayerVisibility();
+                        // Play a sound as a one-shot, releasing its resources when it finishes playing.
+
+                        _updateCurrentPlayingSongDetails(index);
+
+                        _player.setAudioSource(createPlaylist(songs),
+                            initialIndex: index);
+                        _player.play();
+                      } else {
+                        setState(() {
+                          isTapped = !isTapped;
+                        });
+                      }
+                    },
+                  ),
+                );
+              }, childCount: songs.length),
+            )
           ]),
         ),
       );
@@ -803,19 +944,9 @@ class _HomeState extends State<Home> {
                                   IconButton(
                                       onPressed: () async {
                                         setState(() {
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      SongQueue(
-                                                        songs: songs,
-                                                        currentIndex:
-                                                            currentIndex,
-                                                        currentSongID:
-                                                            currentSongID,
-                                                        currentSongTitle:
-                                                            currentSongTitle,
-                                                      )));
+                                          isQueue = true;
+                                          isHome = false;
+                                          isSearch = false;
                                         });
                                       },
                                       icon: Icon(
@@ -886,14 +1017,49 @@ class _HomeState extends State<Home> {
                                           color: MusicPlayerTheme().iconColor,
                                         )),
                                     IconButton(
-                                        onPressed: () {
+                                        onPressed: () async {
                                           setState(() {
-                                            isTapped = !isTapped;
+                                            isShuffle = !isShuffle;
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  isShuffle
+                                                      ? 'Shuffle On'
+                                                      : 'Shuffle Off',
+                                                  textAlign: TextAlign.center,
+                                                  style: const TextStyle(
+                                                      fontSize: 14.0),
+                                                ),
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                                margin: const EdgeInsets.only(
+                                                    bottom: 80,
+                                                    left: 30,
+                                                    right: 30),
+                                                duration: const Duration(
+                                                    milliseconds: 600),
+                                                backgroundColor:
+                                                    const Color.fromARGB(
+                                                        131, 64, 66, 88),
+                                                elevation: 0,
+                                                shape:
+                                                    const RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.all(
+                                                                Radius.circular(
+                                                                    20.0))),
+                                              ),
+                                            );
                                           });
+                                          await _player
+                                              .setShuffleModeEnabled(isShuffle);
                                         },
                                         icon: Icon(
-                                          Icons.more_vert,
-                                          color: MusicPlayerTheme().iconColor,
+                                          Icons.shuffle_rounded,
+                                          color: isShuffle
+                                              ? Colors.white
+                                              : Colors.grey,
                                         )),
                                   ],
                                 ),
@@ -1001,13 +1167,8 @@ class _HomeState extends State<Home> {
                                         onPressed: () async {
                                           await _player.seekToPrevious();
                                         },
-                                        icon: Icon(
-                                          Icons.skip_previous,
-                                          size: 40,
-                                          color: currentIndex != 0
-                                              ? Colors.white
-                                              : Colors.grey,
-                                        )),
+                                        icon: const Icon(Icons.skip_previous,
+                                            size: 40, color: Colors.white)),
                                     const SizedBox(
                                       width: 30,
                                     ),
@@ -1046,14 +1207,8 @@ class _HomeState extends State<Home> {
                                         onPressed: () async {
                                           await _player.seekToNext();
                                         },
-                                        icon: Icon(
-                                          Icons.skip_next,
-                                          size: 40,
-                                          color:
-                                              currentIndex != songs.length - 1
-                                                  ? Colors.white
-                                                  : Colors.grey,
-                                        )),
+                                        icon: const Icon(Icons.skip_next,
+                                            size: 40, color: Colors.white)),
                                   ],
                                 ),
                                 SizedBox(
