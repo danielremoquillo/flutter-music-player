@@ -5,8 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:music_player/components/music_player_theme.dart';
-import 'package:music_player/screens/song_queue.dart';
-
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:mini_music_visualizer/mini_music_visualizer.dart';
@@ -45,6 +43,8 @@ class _HomeState extends State<Home> {
   bool isHome = true;
   bool isQueue = false;
   bool isSearch = false;
+
+  String searchData = '';
 
   //Controller for TextField to control the properties of textfield
   final TextEditingController _textEditingController = TextEditingController();
@@ -97,7 +97,6 @@ class _HomeState extends State<Home> {
   defaultSongs(defaultsong) {
     setState(() {
       search = defaultsong.data!;
-      filteredSongs = search;
     });
   }
 
@@ -522,6 +521,9 @@ class _HomeState extends State<Home> {
             isSearch = false;
             isQueue = false;
             isHome = true;
+            searchData = '';
+            filteredSongs = [];
+
             SystemChannels.textInput.invokeMethod('TextInput.hide');
             _textEditingController.clear();
           });
@@ -553,6 +555,12 @@ class _HomeState extends State<Home> {
                         .where((item) =>
                             item.title.toLowerCase().contains(_searchText))
                         .toList();
+
+                    if (filteredSongs.isEmpty) {
+                      searchData = 'Nothing found';
+                    } else {
+                      searchData = '';
+                    }
                   });
                 },
 
@@ -576,12 +584,7 @@ class _HomeState extends State<Home> {
                         onPressed: () {
                           _textEditingController.clear();
                           setState(() {
-                            _searchText = '';
-                            filteredSongs = search
-                                .where((item) => item.title
-                                    .toLowerCase()
-                                    .contains(_searchText))
-                                .toList();
+                            filteredSongs = [];
                           });
                         },
                         icon: const Icon(Icons.close))
@@ -679,6 +682,9 @@ class _HomeState extends State<Home> {
                             } else {
                               setState(() {
                                 isTapped = !isTapped;
+                                SystemChannels.textInput
+                                    .invokeMethod('TextInput.hide');
+                                filteredSongs = search;
                               });
                             }
                           },
@@ -686,8 +692,16 @@ class _HomeState extends State<Home> {
                       );
                     }, childCount: filteredSongs.length),
                   )
-                : const SliverToBoxAdapter(
-                    child: Center(child: Text('No Songs Found')))
+                : SliverToBoxAdapter(
+                    child: Container(
+                        height: MediaQuery.of(context).size.height * 0.7,
+                        child: Center(
+                            child: Text(
+                          searchData,
+                          style: TextStyle(
+                              color: MusicPlayerTheme().primaryColor,
+                              fontSize: 16),
+                        ))))
           ]),
         ),
       );
@@ -696,9 +710,10 @@ class _HomeState extends State<Home> {
         onWillPop: () async {
           setState(() {
             isSearch = false;
-            isHome = false;
-            isQueue = true;
-
+            isHome = true;
+            isQueue = false;
+            searchData = '';
+            filteredSongs = [];
             SystemChannels.textInput.invokeMethod('TextInput.hide');
             _textEditingController.clear();
           });
@@ -719,9 +734,42 @@ class _HomeState extends State<Home> {
                     setState(() {
                       isQueue = false;
                       isHome = true;
+                      isSearch = false;
                     });
                   },
                   icon: const Icon(Icons.arrow_back)),
+              actions: [
+                IconButton(
+                    onPressed: () async {
+                      setState(() {
+                        isShuffle = !isShuffle;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isShuffle ? 'Shuffle On' : 'Shuffle Off',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 14.0),
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            margin: const EdgeInsets.only(
+                                bottom: 80, left: 30, right: 30),
+                            duration: const Duration(milliseconds: 600),
+                            backgroundColor:
+                                const Color.fromARGB(131, 64, 66, 88),
+                            elevation: 0,
+                            shape: const RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20.0))),
+                          ),
+                        );
+                      });
+                      await _player.setShuffleModeEnabled(isShuffle);
+                    },
+                    icon: Icon(
+                      Icons.shuffle_rounded,
+                      color: isShuffle ? Colors.white : Colors.grey,
+                    )),
+              ],
             ),
 
             //If the textfield is empty then the icon button will change to search, vice versa to close
@@ -925,19 +973,9 @@ class _HomeState extends State<Home> {
                                   IconButton(
                                       onPressed: () async {
                                         setState(() {
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      SongQueue(
-                                                        songs: songs,
-                                                        currentIndex:
-                                                            currentIndex,
-                                                        currentSongID:
-                                                            currentSongID,
-                                                        currentSongTitle:
-                                                            currentSongTitle,
-                                                      )));
+                                          isQueue = true;
+                                          isHome = false;
+                                          isSearch = false;
                                         });
                                       },
                                       icon: Icon(
@@ -1123,13 +1161,8 @@ class _HomeState extends State<Home> {
                                         onPressed: () async {
                                           await _player.seekToPrevious();
                                         },
-                                        icon: Icon(
-                                          Icons.skip_previous,
-                                          size: 40,
-                                          color: currentIndex != 0
-                                              ? Colors.white
-                                              : Colors.grey,
-                                        )),
+                                        icon: const Icon(Icons.skip_previous,
+                                            size: 40, color: Colors.white)),
                                     const SizedBox(
                                       width: 30,
                                     ),
@@ -1168,14 +1201,8 @@ class _HomeState extends State<Home> {
                                         onPressed: () async {
                                           await _player.seekToNext();
                                         },
-                                        icon: Icon(
-                                          Icons.skip_next,
-                                          size: 40,
-                                          color:
-                                              currentIndex != songs.length - 1
-                                                  ? Colors.white
-                                                  : Colors.grey,
-                                        )),
+                                        icon: const Icon(Icons.skip_next,
+                                            size: 40, color: Colors.white)),
                                   ],
                                 ),
                                 SizedBox(
