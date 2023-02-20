@@ -17,27 +17,37 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-//SingleTickerProvider means that the _homeState class has only one controller
 class _HomeState extends State<Home> {
   //This is a class found in plugin: on_audio_query
   final OnAudioQuery _audioQuery = OnAudioQuery();
 
 //This is a class found in plugin: just_audio
   final AudioPlayer _player = AudioPlayer();
+
+  //Holds the song list throughout the runtime
   List<SongModel> songs = [];
+
+  //Holds the initial list of songs
   List<SongModel> search = [];
+
+  //Holds the filtered list based on the user search
   List<SongModel> filteredSongs = [];
+
+//Tracks the details of the current playing
   String currentSongTitle = '';
   String? currentArtist = '';
-
   int currentIndex = 0;
   int currentSongID = 0;
 
+//if music player is visible which can be found on the bottom screen of the app
   bool isPlayerViewVisible = false;
+
   bool isShuffle = false;
 
+//if the current song is playing or not, eg. if playing then turn the icon to pause, else turn the icon to play
   bool isPlaying = false;
 
+//if the current song is tapped or the music player at the bottom of the screen is tapped
   bool isMusicPlayerTapped = true;
 
   //For changing screen stacks
@@ -45,7 +55,11 @@ class _HomeState extends State<Home> {
   bool isQueue = false;
   bool isSearch = false;
 
-  String searchData = '';
+//A string of text that used in indicating if the search returns values
+  String searchResult = '';
+
+  //A string of text that used in finding the relevance to the data contained in the filteredSongs
+  String _searchText = '';
 
   //Controller for TextField to control the properties of textfield
   final TextEditingController _textEditingController = TextEditingController();
@@ -53,18 +67,13 @@ class _HomeState extends State<Home> {
   //Focus node used in TextField to automatically focused when search icon was clicked
   final FocusNode _focusNode = FocusNode();
 
-//List of Songs that are filtered by the search bar
-
-//A string of text that used in finding the relevance to the data contained in the filteredSongs
-  String _searchText = '';
-
   void _changePlayerVisibility() {
     setState(() {
       isPlayerViewVisible = true;
     });
   }
 
-  //Value sort
+  //This components used for sorting music
   int _selectedValueSort = 0;
   final List<SongSortType> sortTechnique = [
     SongSortType.TITLE,
@@ -80,29 +89,31 @@ class _HomeState extends State<Home> {
     OrderType.DESC_OR_GREATER,
   ];
 
-//if Given a permission but the storage is empty
-  Widget permissionResult = Text(
-    'No Songs Found on External Storage',
-    style: TextStyle(color: MusicPlayerTheme().primaryColor),
-  );
+//A stream objecct that holds the duration of songs and the current position
+  Stream<DurationState> get _durationStateStream =>
+      Rx.combineLatest2<Duration, Duration?, DurationState>(
+          _player.positionStream,
+          _player.durationStream,
+          (position, duration) => DurationState(
+              position: position, total: duration ?? Duration.zero));
+
+//This widget indicates the permissionStatus,
+  late Widget permissionResult;
 
   requestStoragePermission() async {
     //If the platform is not web, then get permission
-
-    setState(() {
-      Center(
-        child: Text(
-          'No Songs Found on External Storage',
-          style: TextStyle(color: MusicPlayerTheme().primaryColor),
-        ),
-      );
-    });
-
     if (!kIsWeb) {
+      //Holds the value if the device permitted the app for accessing External storage
       bool permissionsStatus = await _audioQuery.permissionsStatus();
+
+      //if the permissionStatus is True, but the song is empty
+      setState(() {
+        permissionResult = const CircularProgressIndicator();
+      });
 
       //If persmissionsStatus is denied, then it will request. eg. The dialogbox popped up when it is needed to use permission
       if (!permissionsStatus) {
+        //If the permission is denied, then the request access will be displayed insted the list of songs
         setState(() {
           permissionResult = Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -113,8 +124,10 @@ class _HomeState extends State<Home> {
               ),
               TextButton(
                   onPressed: () async {
+                    //Request access dialogue
                     await _audioQuery.permissionsRequest();
 
+                    //For refreshing the permissionStatus
                     requestStoragePermission();
                   },
                   style: TextButton.styleFrom(
@@ -305,12 +318,30 @@ class _HomeState extends State<Home> {
         });
   }
 
-  Stream<DurationState> get _durationStateStream =>
-      Rx.combineLatest2<Duration, Duration?, DurationState>(
-          _player.positionStream,
-          _player.durationStream,
-          (position, duration) => DurationState(
-              position: position, total: duration ?? Duration.zero));
+  ConcatenatingAudioSource createPlaylist(List<SongModel>? songs) {
+    List<AudioSource> sources = [];
+
+    for (var song in songs!) {
+      sources.add(AudioSource.uri(Uri.parse(song.uri!)));
+    }
+
+    return ConcatenatingAudioSource(
+      useLazyPreparation: true,
+      children: sources,
+    );
+  }
+
+  void _updateCurrentPlayingSongDetails(int index) {
+    setState(() {
+      if (songs.isNotEmpty) {
+        currentSongTitle = songs[index].title;
+        currentIndex = index;
+        currentSongID = songs[index].id;
+        currentArtist = songs[index].artist;
+        isPlaying = true;
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -319,12 +350,14 @@ class _HomeState extends State<Home> {
     //Initialize the request permission
     requestStoragePermission();
 
+    //Updates the current song playing
     _player.currentIndexStream.listen((index) async {
       if (index != null) {
         _updateCurrentPlayingSongDetails(index);
       }
     });
 
+    //This block of method used if the current playing is the last index in the song queue and changes the  icon button if the song ended
     _player.playerStateStream.listen((playerState) async {
       if (playerState.playing == true) {
         setState(() {
@@ -345,11 +378,11 @@ class _HomeState extends State<Home> {
     _textEditingController.dispose();
     _focusNode.dispose();
     _player.dispose();
-    //Dispose the controller
   }
 
   @override
   Widget build(BuildContext context) {
+    //Holds the current screen
     Widget child;
 
     if (isHome) {
@@ -370,6 +403,10 @@ class _HomeState extends State<Home> {
             builder: (context, item) {
               //if the directory still retrieving mp3 files
               if (item.data == null) {
+                permissionResult = Text(
+                  'No Songs Found on External Storage',
+                  style: TextStyle(color: MusicPlayerTheme().primaryColor),
+                );
                 return const Center(
                   child: CircularProgressIndicator(),
                 );
@@ -395,10 +432,7 @@ class _HomeState extends State<Home> {
                           icon: const Icon(Icons.search)),
                     ],
 
-                    //The number of Tabbar depends on the length initialized on the controller
-
                     floating: true,
-                    // other properties of SliverAppBar can be set here
                   ),
                   SliverAppBar(
                     pinned: true,
@@ -417,7 +451,6 @@ class _HomeState extends State<Home> {
                             color: Colors.white,
                           )),
                     ],
-                    // other properties of SliverAppBar can be set here
                   ),
                   item.data!.isNotEmpty
                       ? SliverList(
@@ -533,7 +566,7 @@ class _HomeState extends State<Home> {
             isSearch = false;
             isQueue = false;
             isHome = true;
-            searchData = '';
+            searchResult = '';
             filteredSongs = [];
 
             SystemChannels.textInput.invokeMethod('TextInput.hide');
@@ -569,9 +602,9 @@ class _HomeState extends State<Home> {
                         .toList();
 
                     if (filteredSongs.isEmpty) {
-                      searchData = 'Nothing found';
+                      searchResult = 'Nothing found';
                     } else {
-                      searchData = '';
+                      searchResult = '';
                     }
                   });
                 },
@@ -709,7 +742,7 @@ class _HomeState extends State<Home> {
                         height: MediaQuery.of(context).size.height * 0.7,
                         child: Center(
                             child: Text(
-                          searchData,
+                          searchResult,
                           style: TextStyle(
                               color: MusicPlayerTheme().primaryColor,
                               fontSize: 16),
@@ -724,7 +757,7 @@ class _HomeState extends State<Home> {
             isSearch = false;
             isHome = true;
             isQueue = false;
-            searchData = '';
+            searchResult = '';
             filteredSongs = [];
             SystemChannels.textInput.invokeMethod('TextInput.hide');
             _textEditingController.clear();
@@ -783,8 +816,6 @@ class _HomeState extends State<Home> {
                     )),
               ],
             ),
-
-            //If the textfield is empty then the icon button will change to search, vice versa to close
 
             //If the filtered songs is empty, then it will display no songs found
             SliverList(
@@ -880,9 +911,7 @@ class _HomeState extends State<Home> {
     }
 
     return Scaffold(
-      //Shows the drawer, the hamburger icon located at the upper left corner
       backgroundColor: MusicPlayerTheme().primaryAppBarColor,
-      //Shows the body of each Tab, so each tab has unique data
       body: SafeArea(
         child: child,
       ),
@@ -1266,31 +1295,6 @@ class _HomeState extends State<Home> {
             )
           : null,
     );
-  }
-
-  ConcatenatingAudioSource createPlaylist(List<SongModel>? songs) {
-    List<AudioSource> sources = [];
-
-    for (var song in songs!) {
-      sources.add(AudioSource.uri(Uri.parse(song.uri!)));
-    }
-
-    return ConcatenatingAudioSource(
-      useLazyPreparation: true,
-      children: sources,
-    );
-  }
-
-  void _updateCurrentPlayingSongDetails(int index) {
-    setState(() {
-      if (songs.isNotEmpty) {
-        currentSongTitle = songs[index].title;
-        currentIndex = index;
-        currentSongID = songs[index].id;
-        currentArtist = songs[index].artist;
-        isPlaying = true;
-      }
-    });
   }
 }
 
