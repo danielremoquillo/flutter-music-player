@@ -40,3 +40,11 @@ To download the released apk, click this [link.](https://drive.google.com/file/d
 
 For support, email remoquillodr@gmail.com.
 
+
+## Screenshots
+
+![main ui](https://github.com/danielremoquillo/screenshots/blob/main/flutter-music-player/468x300?main.png)
+![music player ui](https://github.com/danielremoquillo/screenshots/blob/main/flutter-music-player/468x300?music_player.png)
+![queue ui](https://github.com/danielremoquillo/screenshots/blob/main/flutter-music-player/468x300?queue.png)
+![search sui](https://github.com/danielremoquillo/screenshots/blob/main/flutter-music-player/468x300?search.png)
+
