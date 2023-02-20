@@ -8,6 +8,7 @@ class MusicPlayerTheme {
   final primaryColor = const Color(0xFFFFFFFF);
   final secondaryColor = const Color(0xFFCCCCCC);
   final tertiaryColor = const Color(0xFF404258);
+  final buttonColor = const Color(0xFF1DB954);
 
   final progressBaseColor = const Color(0xFF3D8361);
 

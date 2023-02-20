@@ -38,8 +38,9 @@ class _HomeState extends State<Home> {
 
   bool isPlaying = false;
 
-  bool isTapped = true;
+  bool isMusicPlayerTapped = true;
 
+  //For changing screen stacks
   bool isHome = true;
   bool isQueue = false;
   bool isSearch = false;
@@ -79,18 +80,53 @@ class _HomeState extends State<Home> {
     OrderType.DESC_OR_GREATER,
   ];
 
+//if Given a permission but the storage is empty
+  Widget permissionResult = Text(
+    'No Songs Found on External Storage',
+    style: TextStyle(color: MusicPlayerTheme().primaryColor),
+  );
+
   requestStoragePermission() async {
     //If the platform is not web, then get permission
+
+    setState(() {
+      Center(
+        child: Text(
+          'No Songs Found on External Storage',
+          style: TextStyle(color: MusicPlayerTheme().primaryColor),
+        ),
+      );
+    });
 
     if (!kIsWeb) {
       bool permissionsStatus = await _audioQuery.permissionsStatus();
 
       //If persmissionsStatus is denied, then it will request. eg. The dialogbox popped up when it is needed to use permission
       if (!permissionsStatus) {
-        await _audioQuery.permissionsRequest();
-      }
+        setState(() {
+          permissionResult = Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Access Denied External Storage',
+                style: TextStyle(color: MusicPlayerTheme().primaryColor),
+              ),
+              TextButton(
+                  onPressed: () async {
+                    await _audioQuery.permissionsRequest();
 
-      setState(() {});
+                    requestStoragePermission();
+                  },
+                  style: TextButton.styleFrom(
+                      backgroundColor: MusicPlayerTheme().buttonColor),
+                  child: Text(
+                    'Request Access',
+                    style: TextStyle(color: MusicPlayerTheme().primaryColor),
+                  ))
+            ],
+          );
+        });
+      }
     }
   }
 
@@ -339,13 +375,6 @@ class _HomeState extends State<Home> {
                 );
               }
 
-              //if the directory has no mp3 ext files
-              if (item.data!.isEmpty) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-
               //Builds the list of song retrieved
               return CustomScrollView(
                 slivers: [
@@ -390,95 +419,107 @@ class _HomeState extends State<Home> {
                     ],
                     // other properties of SliverAppBar can be set here
                   ),
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      //Return the tile of every song
-                      return SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.1,
-                        child: ListTile(
-                          trailing: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (currentSongID == item.data![index].id &&
-                                  isPlaying)
-                                MiniMusicVisualizer(
-                                  color: MusicPlayerTheme().musicVisualiser,
-                                  width: 4,
-                                  height: 15,
+                  item.data!.isNotEmpty
+                      ? SliverList(
+                          delegate:
+                              SliverChildBuilderDelegate((context, index) {
+                            //Return the tile of every song
+                            return SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.1,
+                              child: ListTile(
+                                trailing: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (currentSongID == item.data![index].id &&
+                                        isPlaying)
+                                      MiniMusicVisualizer(
+                                        color:
+                                            MusicPlayerTheme().musicVisualiser,
+                                        width: 4,
+                                        height: 15,
+                                      ),
+                                    IconButton(
+                                      onPressed: () {},
+                                      icon: const Icon(
+                                        Icons.more_vert,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  ],
                                 ),
-                              IconButton(
-                                onPressed: () {},
-                                icon: const Icon(
-                                  Icons.more_vert,
-                                  color: Colors.white,
+
+                                title: SizedBox(
+                                  height: 18,
+                                  child: Text(
+                                    (item.data![index].title)
+                                        .replaceAll('_', ' '),
+                                    style: TextStyle(
+                                        color: currentSongID !=
+                                                item.data![index].id
+                                            ? MusicPlayerTheme().primaryColor
+                                            : MusicPlayerTheme().selectedTile),
+                                    maxLines: 1,
+                                  ),
                                 ),
-                              )
-                            ],
-                          ),
 
-                          title: SizedBox(
-                            height: 18,
-                            child: Text(
-                              (item.data![index].title).replaceAll('_', ' '),
-                              style: TextStyle(
-                                  color: currentSongID != item.data![index].id
-                                      ? MusicPlayerTheme().primaryColor
-                                      : MusicPlayerTheme().selectedTile),
-                              maxLines: 1,
-                            ),
-                          ),
-
-                          subtitle: Text(
-                            item.data![index].artist ?? "No Artist",
-                            style: TextStyle(
-                                color: MusicPlayerTheme().secondaryColor),
-                            maxLines: 1,
-                          ),
-
-                          //Retrieve the song illustration
-                          leading: QueryArtworkWidget(
-                            id: item.data![index].id,
-                            type: ArtworkType.AUDIO,
-                            artworkBorder: BorderRadius.zero,
-                            keepOldArtwork: true,
-
-                            //If the artwork or the song has no illustration
-                            nullArtworkWidget: Container(
-                                padding: const EdgeInsets.all(12.0),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.rectangle,
-                                  color: MusicPlayerTheme()
-                                      .primaryDefaultArtworkBackgroundColor,
+                                subtitle: Text(
+                                  item.data![index].artist ?? "No Artist",
+                                  style: TextStyle(
+                                      color: MusicPlayerTheme().secondaryColor),
+                                  maxLines: 1,
                                 ),
-                                child: const Icon(
-                                  Icons.music_note_sharp,
-                                  color: Colors.white,
-                                )),
-                          ),
 
-                          onTap: () async {
-                            if (currentSongID != item.data![index].id) {
-                              //Store the full list of songs
-                              songs = item.data!;
-                              _changePlayerVisibility();
-                              // Play a sound as a one-shot, releasing its resources when it finishes playing.
+                                //Retrieve the song illustration
+                                leading: QueryArtworkWidget(
+                                  id: item.data![index].id,
+                                  type: ArtworkType.AUDIO,
+                                  artworkBorder: BorderRadius.zero,
+                                  keepOldArtwork: true,
 
-                              _updateCurrentPlayingSongDetails(index);
+                                  //If the artwork or the song has no illustration
+                                  nullArtworkWidget: Container(
+                                      padding: const EdgeInsets.all(12.0),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.rectangle,
+                                        color: MusicPlayerTheme()
+                                            .primaryDefaultArtworkBackgroundColor,
+                                      ),
+                                      child: const Icon(
+                                        Icons.music_note_sharp,
+                                        color: Colors.white,
+                                      )),
+                                ),
 
-                              _player.setAudioSource(createPlaylist(item.data),
-                                  initialIndex: index);
-                              _player.play();
-                            } else {
-                              setState(() {
-                                isTapped = !isTapped;
-                              });
-                            }
-                          },
+                                onTap: () async {
+                                  if (currentSongID != item.data![index].id) {
+                                    //Store the full list of songs
+                                    songs = item.data!;
+                                    _changePlayerVisibility();
+                                    // Play a sound as a one-shot, releasing its resources when it finishes playing.
+
+                                    _updateCurrentPlayingSongDetails(index);
+
+                                    _player.setAudioSource(
+                                        createPlaylist(item.data),
+                                        initialIndex: index);
+                                    _player.play();
+                                  } else {
+                                    setState(() {
+                                      isMusicPlayerTapped =
+                                          !isMusicPlayerTapped;
+                                    });
+                                  }
+                                },
+                              ),
+                            );
+                          }, childCount: item.data!.length),
+                        )
+                      : SliverToBoxAdapter(
+                          child: SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.8,
+                              child: Center(child: permissionResult)),
                         ),
-                      );
-                    }, childCount: item.data!.length),
-                  ),
                 ],
               );
             }),
@@ -652,7 +693,7 @@ class _HomeState extends State<Home> {
                               _player.play();
                             } else {
                               setState(() {
-                                isTapped = !isTapped;
+                                isMusicPlayerTapped = !isMusicPlayerTapped;
                                 SystemChannels.textInput
                                     .invokeMethod('TextInput.hide');
                                 filteredSongs = search;
@@ -664,7 +705,7 @@ class _HomeState extends State<Home> {
                     }, childCount: filteredSongs.length),
                   )
                 : SliverToBoxAdapter(
-                    child: Container(
+                    child: SizedBox(
                         height: MediaQuery.of(context).size.height * 0.7,
                         child: Center(
                             child: Text(
@@ -823,7 +864,7 @@ class _HomeState extends State<Home> {
                         _player.play();
                       } else {
                         setState(() {
-                          isTapped = !isTapped;
+                          isMusicPlayerTapped = !isMusicPlayerTapped;
                         });
                       }
                     },
@@ -849,16 +890,16 @@ class _HomeState extends State<Home> {
           ? Container(
               color: Colors.transparent,
               width: MediaQuery.of(context).size.width,
-              height: isTapped
+              height: isMusicPlayerTapped
                   ? MediaQuery.of(context).size.height * 0.1
                   : MediaQuery.of(context).size.height * 0.96,
-              child: isTapped
+              child: isMusicPlayerTapped
                   ? Stack(
                       children: [
                         GestureDetector(
                           onTap: () {
                             setState(() {
-                              isTapped = !isTapped;
+                              isMusicPlayerTapped = !isMusicPlayerTapped;
                               SystemChannels.textInput
                                   .invokeMethod('TextInput.hide');
                             });
@@ -987,7 +1028,7 @@ class _HomeState extends State<Home> {
                       //Overrides Back button
                       onWillPop: () async {
                         setState(() {
-                          isTapped = !isTapped;
+                          isMusicPlayerTapped = !isMusicPlayerTapped;
                         });
                         return false;
                       },
@@ -1008,7 +1049,8 @@ class _HomeState extends State<Home> {
                                     IconButton(
                                         onPressed: () {
                                           setState(() {
-                                            isTapped = !isTapped;
+                                            isMusicPlayerTapped =
+                                                !isMusicPlayerTapped;
                                           });
                                         },
                                         icon: Icon(
