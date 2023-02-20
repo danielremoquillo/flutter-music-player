@@ -1037,18 +1037,21 @@ class _HomeState extends State<Home> {
                               final total =
                                   durationState?.total ?? Duration.zero;
 
-                              return ProgressBar(
-                                thumbRadius: 0,
-                                progress: progress,
-                                total: total,
-                                barHeight: 3.0,
-                                timeLabelTextStyle:
-                                    const TextStyle(color: Colors.transparent),
-                                baseBarColor:
-                                    MusicPlayerTheme().progressBaseColor,
-                                progressBarColor:
-                                    MusicPlayerTheme().progressBarColor,
-                                thumbColor: Colors.transparent,
+                              return IgnorePointer(
+                                child: ProgressBar(
+                                  thumbGlowRadius: 0,
+                                  thumbRadius: 0,
+                                  progress: progress,
+                                  total: total,
+                                  barHeight: 3.0,
+                                  timeLabelTextStyle: const TextStyle(
+                                      color: Colors.transparent),
+                                  baseBarColor:
+                                      MusicPlayerTheme().progressBaseColor,
+                                  progressBarColor:
+                                      MusicPlayerTheme().progressBarColor,
+                                  thumbColor: Colors.transparent,
+                                ),
                               );
                             }),
                       ],
