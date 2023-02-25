@@ -40,7 +40,7 @@ If you have connected android device, run
 
 ## Download
 
-To download the released apk, click this [link.](https://drive.google.com/file/d/1URJcJvi9mtTPu6hBYv_KtIy1q3R5ElT6/view?usp=sharing)
+To download the released apk, click this [link.](https://drive.google.com/file/d/1TWy79vHktO8NxPpVUS471VQrMa3lhPyj/view?usp=share_link)
 
 
 
