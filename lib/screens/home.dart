@@ -403,10 +403,6 @@ class _HomeState extends State<Home> {
             builder: (context, item) {
               //if the directory still retrieving mp3 files
               if (item.data == null) {
-                permissionResult = Text(
-                  'No Songs Found on External Storage',
-                  style: TextStyle(color: MusicPlayerTheme().primaryColor),
-                );
                 return const Center(
                   child: CircularProgressIndicator(),
                 );
@@ -472,13 +468,6 @@ class _HomeState extends State<Home> {
                                         width: 4,
                                         height: 15,
                                       ),
-                                    IconButton(
-                                      onPressed: () {},
-                                      icon: const Icon(
-                                        Icons.more_vert,
-                                        color: Colors.white,
-                                      ),
-                                    )
                                   ],
                                 ),
 
@@ -833,13 +822,6 @@ class _HomeState extends State<Home> {
                             width: 4,
                             height: 15,
                           ),
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(
-                            Icons.more_vert,
-                            color: Colors.white,
-                          ),
-                        )
                       ],
                     ),
 
@@ -1064,233 +1046,230 @@ class _HomeState extends State<Home> {
                         });
                         return false;
                       },
-                      child: SingleChildScrollView(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: MusicPlayerTheme().linearGradientBody,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    IconButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            isMusicPlayerTapped =
-                                                !isMusicPlayerTapped;
-                                          });
-                                        },
-                                        icon: Icon(
-                                          Icons.expand_more_outlined,
-                                          size: 30,
-                                          color: MusicPlayerTheme().iconColor,
-                                        )),
-                                    IconButton(
-                                        onPressed: () async {
-                                          setState(() {
-                                            isShuffle = !isShuffle;
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  isShuffle
-                                                      ? 'Shuffle On'
-                                                      : 'Shuffle Off',
-                                                  textAlign: TextAlign.center,
-                                                  style: const TextStyle(
-                                                      fontSize: 14.0),
-                                                ),
-                                                behavior:
-                                                    SnackBarBehavior.floating,
-                                                margin: const EdgeInsets.only(
-                                                    bottom: 80,
-                                                    left: 30,
-                                                    right: 30),
-                                                duration: const Duration(
-                                                    milliseconds: 600),
-                                                backgroundColor:
-                                                    const Color.fromARGB(
-                                                        131, 64, 66, 88),
-                                                elevation: 0,
-                                                shape:
-                                                    const RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.all(
-                                                                Radius.circular(
-                                                                    20.0))),
+                      child: Container(
+                        height: MediaQuery.of(context).size.height,
+                        decoration: BoxDecoration(
+                          gradient: MusicPlayerTheme().linearGradientBody,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          isMusicPlayerTapped =
+                                              !isMusicPlayerTapped;
+                                        });
+                                      },
+                                      icon: Icon(
+                                        Icons.expand_more_outlined,
+                                        size: 30,
+                                        color: MusicPlayerTheme().iconColor,
+                                      )),
+                                  IconButton(
+                                      onPressed: () async {
+                                        setState(() {
+                                          isShuffle = !isShuffle;
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                isShuffle
+                                                    ? 'Shuffle On'
+                                                    : 'Shuffle Off',
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                    fontSize: 14.0),
                                               ),
-                                            );
-                                          });
-                                          await _player
-                                              .setShuffleModeEnabled(isShuffle);
-                                        },
-                                        icon: Icon(
-                                          Icons.shuffle_rounded,
-                                          color: isShuffle
-                                              ? Colors.white
-                                              : Colors.grey,
-                                        )),
-                                  ],
-                                ),
-                                Container(
-                                  margin: const EdgeInsets.only(
-                                      top: 60, bottom: 45),
-                                  height: 250,
-                                  width: 250,
-                                  child: QueryArtworkWidget(
-                                    id: currentSongID,
-                                    keepOldArtwork: true,
-                                    type: ArtworkType.AUDIO,
-                                    artworkBorder: BorderRadius.zero,
-
-                                    //If the artwork or the song has no illustration
-                                    nullArtworkWidget: Container(
-                                        padding: const EdgeInsets.all(12.0),
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.rectangle,
-                                          color: MusicPlayerTheme()
-                                              .primaryDefaultArtworkBackgroundColor,
-                                        ),
-                                        child: const Icon(
-                                          Icons.music_note_sharp,
-                                          color: Colors.white,
-                                          size: 120,
-                                        )),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        currentSongTitle.replaceAll('_', ' '),
-                                        style: TextStyle(
-                                            color:
-                                                MusicPlayerTheme().primaryColor,
-                                            fontSize: 20),
-                                        maxLines: 1,
-                                        textAlign: TextAlign.center,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      Text(
-                                        currentArtist ?? "No Artist",
-                                        style: TextStyle(
-                                            fontSize: 18,
-                                            color: MusicPlayerTheme()
-                                                .secondaryColor),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 1,
-                                      )
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: 55,
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12.0),
-                                  child: StreamBuilder<DurationState>(
-                                      stream: _durationStateStream,
-                                      builder: (context, snapshot) {
-                                        final durationState = snapshot.data;
-                                        final progress =
-                                            durationState?.position ??
-                                                Duration.zero;
-                                        final total = durationState?.total ??
-                                            Duration.zero;
-
-                                        return ProgressBar(
-                                          onSeek: (duration) {
-                                            _player.seek(duration);
-                                          },
-                                          progress: progress,
-                                          total: total,
-                                          barHeight: 6.0,
-                                          thumbRadius: 8,
-                                          timeLabelLocation:
-                                              TimeLabelLocation.sides,
-                                          timeLabelTextStyle: TextStyle(
-                                              color: MusicPlayerTheme()
-                                                  .primaryColor),
-                                          baseBarColor: MusicPlayerTheme()
-                                              .progressBaseColor,
-                                          progressBarColor: MusicPlayerTheme()
-                                              .progressBarColor,
-                                          thumbColor: MusicPlayerTheme()
-                                              .progressBarColor,
-                                        );
-                                      }),
-                                ),
-                                const SizedBox(
-                                  height: 25,
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    IconButton(
-                                        onPressed: () async {
-                                          await _player.seekToPrevious();
-                                        },
-                                        icon: const Icon(Icons.skip_previous,
-                                            size: 40, color: Colors.white)),
-                                    const SizedBox(
-                                      width: 30,
-                                    ),
-                                    isPlaying
-                                        ? IconButton(
-                                            onPressed: () async {
-                                              setState(() {
-                                                isPlaying = !isPlaying;
-                                              });
-                                              await _player.pause();
-                                            },
-                                            icon: Icon(
-                                              Icons.pause,
-                                              color:
-                                                  MusicPlayerTheme().iconColor,
-                                              size: 40,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                              margin: const EdgeInsets.only(
+                                                  bottom: 80,
+                                                  left: 30,
+                                                  right: 30),
+                                              duration: const Duration(
+                                                  milliseconds: 600),
+                                              backgroundColor:
+                                                  const Color.fromARGB(
+                                                      131, 64, 66, 88),
+                                              elevation: 0,
+                                              shape:
+                                                  const RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.all(
+                                                              Radius.circular(
+                                                                  20.0))),
                                             ),
-                                          )
-                                        : IconButton(
-                                            onPressed: () async {
-                                              setState(() {
-                                                isPlaying = !isPlaying;
-                                              });
-                                              await _player.play();
-                                            },
-                                            icon: Icon(
-                                              Icons.play_arrow,
-                                              color:
-                                                  MusicPlayerTheme().iconColor,
-                                              size: 40,
-                                            )),
-                                    const SizedBox(
-                                      width: 30,
+                                          );
+                                        });
+                                        await _player
+                                            .setShuffleModeEnabled(isShuffle);
+                                      },
+                                      icon: Icon(
+                                        Icons.shuffle_rounded,
+                                        color: isShuffle
+                                            ? Colors.white
+                                            : Colors.grey,
+                                      )),
+                                ],
+                              ),
+                              Container(
+                                margin:
+                                    const EdgeInsets.only(top: 40, bottom: 10),
+                                height: 250,
+                                width: 250,
+                                child: QueryArtworkWidget(
+                                  id: currentSongID,
+                                  keepOldArtwork: true,
+                                  type: ArtworkType.AUDIO,
+                                  artworkBorder: BorderRadius.zero,
+
+                                  //If the artwork or the song has no illustration
+                                  nullArtworkWidget: Container(
+                                      padding: const EdgeInsets.all(12.0),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.rectangle,
+                                        color: MusicPlayerTheme()
+                                            .primaryDefaultArtworkBackgroundColor,
+                                      ),
+                                      child: const Icon(
+                                        Icons.music_note_sharp,
+                                        color: Colors.white,
+                                        size: 120,
+                                      )),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      currentSongTitle.replaceAll('_', ' '),
+                                      style: TextStyle(
+                                          color:
+                                              MusicPlayerTheme().primaryColor,
+                                          fontSize: 20),
+                                      maxLines: 1,
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    IconButton(
-                                        onPressed: () async {
-                                          await _player.seekToNext();
-                                        },
-                                        icon: const Icon(Icons.skip_next,
-                                            size: 40, color: Colors.white)),
+                                    const SizedBox(
+                                      height: 10,
+                                    ),
+                                    Text(
+                                      currentArtist ?? "No Artist",
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          color: MusicPlayerTheme()
+                                              .secondaryColor),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                    )
                                   ],
                                 ),
-                                SizedBox(
-                                  height:
-                                      MediaQuery.of(context).size.height * 0.06,
-                                ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(
+                                height: 55,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12.0),
+                                child: StreamBuilder<DurationState>(
+                                    stream: _durationStateStream,
+                                    builder: (context, snapshot) {
+                                      final durationState = snapshot.data;
+                                      final progress =
+                                          durationState?.position ??
+                                              Duration.zero;
+                                      final total =
+                                          durationState?.total ?? Duration.zero;
+
+                                      return ProgressBar(
+                                        onSeek: (duration) {
+                                          _player.seek(duration);
+                                        },
+                                        progress: progress,
+                                        total: total,
+                                        barHeight: 6.0,
+                                        thumbRadius: 8,
+                                        timeLabelLocation:
+                                            TimeLabelLocation.sides,
+                                        timeLabelTextStyle: TextStyle(
+                                            color: MusicPlayerTheme()
+                                                .primaryColor),
+                                        baseBarColor: MusicPlayerTheme()
+                                            .progressBaseColor,
+                                        progressBarColor:
+                                            MusicPlayerTheme().progressBarColor,
+                                        thumbColor:
+                                            MusicPlayerTheme().progressBarColor,
+                                      );
+                                    }),
+                              ),
+                              const SizedBox(
+                                height: 25,
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                      onPressed: () async {
+                                        await _player.seekToPrevious();
+                                      },
+                                      icon: const Icon(Icons.skip_previous,
+                                          size: 40, color: Colors.white)),
+                                  const SizedBox(
+                                    width: 30,
+                                  ),
+                                  isPlaying
+                                      ? IconButton(
+                                          onPressed: () async {
+                                            setState(() {
+                                              isPlaying = !isPlaying;
+                                            });
+                                            await _player.pause();
+                                          },
+                                          icon: Icon(
+                                            Icons.pause,
+                                            color: MusicPlayerTheme().iconColor,
+                                            size: 40,
+                                          ),
+                                        )
+                                      : IconButton(
+                                          onPressed: () async {
+                                            setState(() {
+                                              isPlaying = !isPlaying;
+                                            });
+                                            await _player.play();
+                                          },
+                                          icon: Icon(
+                                            Icons.play_arrow,
+                                            color: MusicPlayerTheme().iconColor,
+                                            size: 40,
+                                          )),
+                                  const SizedBox(
+                                    width: 30,
+                                  ),
+                                  IconButton(
+                                      onPressed: () async {
+                                        await _player.seekToNext();
+                                      },
+                                      icon: const Icon(Icons.skip_next,
+                                          size: 40, color: Colors.white)),
+                                ],
+                              ),
+                              SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.06,
+                              ),
+                            ],
                           ),
                         ),
                       ),
