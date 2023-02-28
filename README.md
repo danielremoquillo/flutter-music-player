@@ -17,7 +17,7 @@ To deploy this project run
 If you have connected android device, run
 
 ```bash
-  flutter install
+  flutter install --release
 ```
 
 
@@ -36,6 +36,14 @@ If you have connected android device, run
 ![queue ui](https://github.com/danielremoquillo/screenshots/blob/main/flutter-music-player/queue.png)
 ![search sui](https://github.com/danielremoquillo/screenshots/blob/main/flutter-music-player/search.png)
 
+## Plugins
+
+- [OnAudioQuery](https://pub.dev/packages/on_audio_query)
+- [MiniMusicVisualizer](https://pub.dev/packages/mini_music_visualizer)
+- [JustAudio](https://pub.dev/packages/just_audio)
+- [AudioVideoProgressBar](https://pub.dev/packages/audio_video_progress_bar)
+- [RxDart](https://pub.dev/packages/rxdart)
+- [Marquee](https://pub.dev/packages/marquee)
 
 
 ## Download
